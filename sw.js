@@ -1,4 +1,4 @@
-const CACHE_NAME = "wuzhangtong-demo-v1";
+const CACHE_NAME = "wuzhangtong-demo-v2";
 const BASE_PATH = new URL("./", self.location.href).pathname;
 const ASSETS = [BASE_PATH, `${BASE_PATH}manifest.webmanifest`, `${BASE_PATH}pwa-icon.svg`];
 
