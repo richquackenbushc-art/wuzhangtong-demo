@@ -19,6 +19,7 @@ import {
   type TileState
 } from "./services/tileService";
 import type {
+  AccessibilityProfile,
   Coordinate,
   DangerSegment,
   DangerType,
@@ -46,6 +47,10 @@ const facilityTypes: Array<FacilityType | "全部"> = ["全部", "电梯", "坡�
 const quickHelp = ["帮我通过临时坡道", "确认电梯是否可用", "陪同到地铁入口"];
 const defaultHelpTime = "今天 18:30";
 const defaultHelpContact = "13812342468";
+const profileOptions: Array<{ key: AccessibilityProfile; label: string; hint: string }> = [
+  { key: "vision", label: "视障", hint: "盲道连续、路口提示、避开盲道占用" },
+  { key: "mobility", label: "肢体障碍", hint: "电梯坡道、少台阶、避开电梯故障" }
+];
 
 type SpeechRecognitionEventLike = {
   results: ArrayLike<{ 0?: { transcript: string } }>;
@@ -157,12 +162,44 @@ function getSpeechRecognitionConstructor(): SpeechRecognitionConstructorLike | n
   return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition ?? null;
 }
 
-function getRouteStepLabels(routeId: RouteOption["id"], startPoint: string, destination: string) {
+function getRouteDisplayName(routeId: RouteOption["id"], profile: AccessibilityProfile) {
+  if (profile === "vision") return routeId === "safe" ? "盲道优先路线" : "少障碍快速路线";
+  return routeId === "safe" ? "轮椅友好路线" : "少绕行路线";
+}
+
+function getRouteSummary(routeId: RouteOption["id"], profile: AccessibilityProfile) {
+  if (profile === "vision") {
+    return routeId === "safe"
+      ? "优先选择连续盲道、明确过街点和更少盲道占用的路段。"
+      : "距离更短，但会靠近盲道占用热点，适合有人陪同或现场确认后使用。";
+  }
+  return routeId === "safe"
+    ? "优先经过无障碍电梯、坡道和更平缓路段，避开台阶与电梯故障点。"
+    : "绕行更少，但会靠近台阶障碍或电梯状态不稳定区域。";
+}
+
+function getRouteStepLabels(
+  routeId: RouteOption["id"],
+  profile: AccessibilityProfile,
+  startPoint: string,
+  destination: string
+) {
   const origin = startPoint.trim() || "当前位置";
   const target = destination.trim() || "目的地";
+  if (profile === "vision") {
+    return routeId === "safe"
+      ? [origin, "沿连续盲道向东行进", "选择有清晰提示的过街口", "绕开盲道占用热点", target]
+      : [origin, "王府井站南侧出口", "东长安街北侧近路", "靠近盲道占用区域，需现场确认", target];
+  }
   return routeId === "safe"
-    ? [origin, "王府井步行街东侧平缓路段", "东长安街无障碍过街口", "避开盲道占用热点", target]
-    : [origin, "王府井站南侧出口", "东长安街北侧近路", "穿过高风险盲道占用区域", target];
+    ? [origin, "优先使用无障碍电梯出口", "经过王府井步行街南口坡道", "避开台阶障碍与电梯故障点", target]
+    : [origin, "王府井站南侧出口", "选择更短街区路径", "靠近台阶障碍区域，建议有人陪同", target];
+}
+
+function getProfileFocusItems(profile: AccessibilityProfile) {
+  return profile === "vision"
+    ? ["盲道占用权重更高", "优先连续盲道", "路口提示更明确"]
+    : ["台阶与电梯故障权重更高", "优先坡道/电梯", "减少高差和绕行疲劳"];
 }
 
 function App() {
@@ -191,6 +228,7 @@ function App() {
   const [helpContactInfo, setHelpContactInfo] = useState(defaultHelpContact);
   const [facilityFilter, setFacilityFilter] = useState<FacilityType | "全部">("全部");
   const [facilitySearch, setFacilitySearch] = useState("");
+  const [accessibilityProfile, setAccessibilityProfile] = useState<AccessibilityProfile>("vision");
   const [highContrast, setHighContrast] = useState(false);
   const [largeText, setLargeText] = useState(false);
 
@@ -215,11 +253,10 @@ function App() {
     () =>
       routeOptions.map((route) => ({
         ...route,
-        computed: scoreRoute(route, dangers)
+        computed: scoreRoute(route, dangers, accessibilityProfile)
       })),
-    [dangers]
+    [dangers, accessibilityProfile]
   );
-  const selectedScore = routeScores.find((route) => route.id === selectedRoute.id)?.computed;
   const filteredFacilities = useMemo(() => {
     const keyword = facilitySearch.trim().toLowerCase();
     return facilities.filter((item) => {
@@ -302,11 +339,12 @@ function App() {
         points: 10
       }
     ]);
-	    setSelectedRouteId("safe");
+    setSelectedRouteId("safe");
     setFacilitySearch("");
-	    setNavStep(0);
-	    setIsNavigating(false);
-	    setActiveView("map");
+    setAccessibilityProfile("vision");
+    setNavStep(0);
+    setIsNavigating(false);
+    setActiveView("map");
   }
 
   const appClass = ["app", highContrast ? "high-contrast" : "", largeText ? "large-text" : ""].join(" ");
@@ -370,6 +408,8 @@ function App() {
             selectedRoute={selectedRoute}
             selectedRouteId={selectedRouteId}
             setSelectedRouteId={setSelectedRouteId}
+            accessibilityProfile={accessibilityProfile}
+            setAccessibilityProfile={setAccessibilityProfile}
             routeScores={routeScores}
             navStep={navStep}
             isNavigating={isNavigating}
@@ -407,13 +447,13 @@ function App() {
         )}
 
         {activeView === "facilities" && (
-	          <FacilitiesView
-	            filter={facilityFilter}
-	            setFilter={setFacilityFilter}
+          <FacilitiesView
+            filter={facilityFilter}
+            setFilter={setFacilityFilter}
             search={facilitySearch}
             setSearch={setFacilitySearch}
-	            facilities={filteredFacilities}
-	            onNavigate={(facility) => {
+            facilities={filteredFacilities}
+            onNavigate={(facility) => {
               setDestination(facility.name);
               setSelectedRouteId("safe");
               setActiveView("map");
@@ -461,6 +501,8 @@ type MapDashboardProps = {
   selectedRoute: RouteOption;
   selectedRouteId: RouteOption["id"];
   setSelectedRouteId: (value: RouteOption["id"]) => void;
+  accessibilityProfile: AccessibilityProfile;
+  setAccessibilityProfile: (value: AccessibilityProfile) => void;
   routeScores: Array<RouteOption & { computed: ReturnType<typeof scoreRoute> }>;
   navStep: number;
   isNavigating: boolean;
@@ -681,6 +723,23 @@ function MapDashboard(props: MapDashboardProps) {
             value={props.destination}
             onChange={(event) => props.setDestination(event.target.value)}
           />
+          <fieldset className="profile-switch">
+            <legend>出行需求</legend>
+            <div>
+              {profileOptions.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  className={props.accessibilityProfile === option.key ? "profile-option active" : "profile-option"}
+                  onClick={() => props.setAccessibilityProfile(option.key)}
+                  aria-pressed={props.accessibilityProfile === option.key}
+                  title={option.hint}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
           <button onClick={() => props.setSelectedRouteId("safe")}>规划路线</button>
         </div>
         <div className="map-canvas">
@@ -691,15 +750,15 @@ function MapDashboard(props: MapDashboardProps) {
             <button type="button" onClick={() => changeZoom(1)} disabled={!canZoomIn} aria-label="放大地图" title="放大地图">
               +
             </button>
-	            <button
-	              type="button"
-	              onClick={resetMapView}
-	              disabled={mapZoom === mapConfig.initialZoom && mapCenter.lat === mapConfig.center.lat && mapCenter.lng === mapConfig.center.lng}
-	              aria-label="重置地图缩放"
-	              title="重置视图"
-	            >
-	              复位
-	            </button>
+            <button
+              type="button"
+              onClick={resetMapView}
+              disabled={mapZoom === mapConfig.initialZoom && mapCenter.lat === mapConfig.center.lat && mapCenter.lng === mapConfig.center.lng}
+              aria-label="重置地图缩放"
+              title="重置视图"
+            >
+              复位
+            </button>
           </div>
           {/* 瓦片加载进度 */}
           {loadProgress < 1 && totalTiles > 0 && (
@@ -710,7 +769,7 @@ function MapDashboard(props: MapDashboardProps) {
               <span>{loadedCount}/{totalTiles}</span>
             </div>
           )}
-	          <div
+          <div
               className={isDraggingMap ? "map-viewport dragging" : "map-viewport"}
               role="img"
               aria-label="北京王府井周边无障碍风险、设施和路线示意地图，可拖拽查看周边地点"
@@ -760,19 +819,19 @@ function MapDashboard(props: MapDashboardProps) {
               </div>
               {/* 路线层 */}
               <svg className="route-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-	                  <polyline
-	                  className={props.selectedRouteId === "safe" ? "safe-route" : "short-route"}
-	                  points={props.selectedRoute.path
-	                    .map((point) => {
+                <polyline
+                  className={props.selectedRouteId === "safe" ? "safe-route" : "short-route"}
+                  points={props.selectedRoute.path
+                    .map((point) => {
                         const spot = projectOnTiles(point, mapZoom, mapCenter);
                         return `${spot.x},${spot.y}`;
                       })
-	                    .join(" ")}
-	                />
-	              </svg>
+                    .join(" ")}
+                />
+              </svg>
               {/* 障碍标记 */}
               {props.dangers.map((danger) => {
-	                const spot = projectOnTiles(danger.location, mapZoom, mapCenter);
+                const spot = projectOnTiles(danger.location, mapZoom, mapCenter);
                 return (
                   <span
                     className={`danger-marker level-${danger.level}`}
@@ -784,7 +843,7 @@ function MapDashboard(props: MapDashboardProps) {
               })}
               {/* 设施标记 */}
               {facilities.map((facility) => {
-	                const spot = projectOnTiles(facility.location, mapZoom, mapCenter);
+                const spot = projectOnTiles(facility.location, mapZoom, mapCenter);
                 return (
                   <span
                     className="facility-marker"
@@ -800,8 +859,8 @@ function MapDashboard(props: MapDashboardProps) {
               <span
                 className="user-marker"
                 style={{
-	                  left: `${projectOnTiles(props.selectedRoute.path[0], mapZoom, mapCenter).x}%`,
-	                  top: `${projectOnTiles(props.selectedRoute.path[0], mapZoom, mapCenter).y}%`,
+                  left: `${projectOnTiles(props.selectedRoute.path[0], mapZoom, mapCenter).x}%`,
+                  top: `${projectOnTiles(props.selectedRoute.path[0], mapZoom, mapCenter).y}%`,
                 }}
               >
                 起
@@ -826,18 +885,18 @@ function MapDashboard(props: MapDashboardProps) {
               className={props.selectedRouteId === route.id ? "route-tab active" : "route-tab"}
               onClick={() => props.setSelectedRouteId(route.id)}
             >
-              <strong>{route.name}</strong>
+              <strong>{getRouteDisplayName(route.id, props.accessibilityProfile)}</strong>
               <span>{formatMeters(route.distance)} · {route.duration} 分钟</span>
             </button>
           ))}
         </div>
 
         <article className="route-summary">
-          <h2 id="map-heading">{props.selectedRoute.name}</h2>
+          <h2 id="map-heading">{getRouteDisplayName(props.selectedRouteId, props.accessibilityProfile)}</h2>
           <p className="route-points">
             {props.startPoint || "当前位置"} → {props.destination || "未设置目的地"}
           </p>
-          <p>{props.selectedRoute.summary}</p>
+          <p>{getRouteSummary(props.selectedRouteId, props.accessibilityProfile)}</p>
           <dl className="metric-grid">
             <div>
               <dt>风险评分</dt>
@@ -852,12 +911,25 @@ function MapDashboard(props: MapDashboardProps) {
               <dd>{formatMeters(props.selectedRoute.distance)}</dd>
             </div>
           </dl>
+          <div className="profile-detail" aria-label="当前出行需求规划侧重点">
+            <strong>{props.accessibilityProfile === "vision" ? "视障规划侧重点" : "肢体障碍规划侧重点"}</strong>
+            <ul>
+              {getProfileFocusItems(props.accessibilityProfile).map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
           <div className="route-detail" aria-label="路线显示">
             <strong>路线显示</strong>
             <ol>
-              {getRouteStepLabels(props.selectedRouteId, props.startPoint, props.destination).map((step) => (
-                <li key={step}>{step}</li>
-              ))}
+              {getRouteStepLabels(
+                  props.selectedRouteId,
+                  props.accessibilityProfile,
+                  props.startPoint,
+                  props.destination
+                ).map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
             </ol>
           </div>
           <div className="action-row">

@@ -252,7 +252,7 @@ h2 {
 
 .map-tools {
   display: grid;
-  grid-template-columns: 64px minmax(180px, 1fr) 72px minmax(180px, 1fr) auto;
+  grid-template-columns: 64px minmax(150px, 1fr) 72px minmax(150px, 1fr) minmax(220px, 0.9fr) auto;
   gap: 12px;
   align-items: end;
   padding: 16px;
@@ -261,6 +261,43 @@ h2 {
 
 .map-tools label {
   margin: 0 0 11px;
+}
+
+.profile-switch {
+  min-width: 0;
+  margin: 0;
+}
+
+.profile-switch legend {
+  margin-bottom: 8px;
+  color: #17312f;
+  font-weight: 700;
+}
+
+.profile-switch div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.profile-option {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  color: #17312f;
+  background: #e8f2ef;
+  white-space: nowrap;
+}
+
+.profile-option.active {
+  color: #ffffff;
+  background: #0f766e;
+}
+
+.profile-option:hover:not(:disabled),
+.profile-option:focus-visible {
+  color: #ffffff;
+  background: #0b5f59;
 }
 
 .map-canvas {
@@ -640,6 +677,7 @@ h2 {
   font-weight: 900;
 }
 
+.profile-detail,
 .route-detail {
   display: grid;
   gap: 10px;
@@ -649,6 +687,11 @@ h2 {
   background: #edf7f3;
 }
 
+.profile-detail {
+  background: #fff8d6;
+}
+
+.profile-detail ul,
 .route-detail ol {
   display: grid;
   gap: 8px;
@@ -656,6 +699,7 @@ h2 {
   padding-left: 20px;
 }
 
+.profile-detail li,
 .route-detail li {
   padding-left: 2px;
 }
@@ -989,6 +1033,8 @@ dd {
 .high-contrast .metric-grid div,
 .high-contrast .wall-metrics div,
 .high-contrast .ai-result,
+.high-contrast .profile-detail,
+.high-contrast .route-detail,
 .high-contrast .request-card,
 .high-contrast .facility-card {
   background: #111111;

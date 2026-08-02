@@ -5,6 +5,8 @@ export type Coordinate = {
 
 export type DangerType = "盲道占用" | "电梯故障" | "施工围挡" | "台阶障碍";
 
+export type AccessibilityProfile = "vision" | "mobility";
+
 export type DangerSegment = {
   id: string;
   type: DangerType;

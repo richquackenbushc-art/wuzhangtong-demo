@@ -1,4 +1,4 @@
-import type { Coordinate, DangerSegment, RouteOption } from "../types";
+import type { AccessibilityProfile, Coordinate, DangerSegment, RouteOption } from "../types";
 
 const EARTH_RADIUS = 6371000;
 
@@ -34,7 +34,22 @@ function pointToSegmentDistance(point: Coordinate, start: Coordinate, end: Coord
   return Math.hypot(px - closestX, py - closestY);
 }
 
-export function scoreRoute(route: RouteOption, dangers: DangerSegment[]) {
+const profileDangerWeights: Record<AccessibilityProfile, Record<DangerSegment["type"], number>> = {
+  vision: {
+    盲道占用: 2.4,
+    施工围挡: 1.5,
+    台阶障碍: 1.1,
+    电梯故障: 0.7
+  },
+  mobility: {
+    台阶障碍: 2.3,
+    电梯故障: 2.1,
+    施工围挡: 1.4,
+    盲道占用: 0.9
+  }
+};
+
+export function scoreRoute(route: RouteOption, dangers: DangerSegment[], profile: AccessibilityProfile = "vision") {
   const collisions = dangers.filter((danger) =>
     route.path.some((point, index) => {
       const next = route.path[index + 1];
@@ -43,10 +58,12 @@ export function scoreRoute(route: RouteOption, dangers: DangerSegment[]) {
     })
   );
 
-  const riskScore = collisions.reduce((sum, danger) => sum + danger.level * danger.reportCount, 0);
+  const riskScore = collisions.reduce(
+    (sum, danger) => sum + danger.level * danger.reportCount * profileDangerWeights[profile][danger.type],
+    0
+  );
   return {
     collisions,
-    riskScore: riskScore + Math.round(route.distance / 80)
+    riskScore: Math.round(riskScore + route.distance / 80)
   };
 }
-
