@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="无障通图标">
+  <rect width="128" height="128" rx="24" fill="#0f766e"/>
+  <path d="M38 82c0-18 13-32 31-32 7 0 14 2 20 6" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="45" cy="91" r="12" fill="#ffffff"/>
+  <circle cx="88" cy="91" r="12" fill="#ffffff"/>
+  <path d="M63 25h24M75 25v46M53 47h44" fill="none" stroke="#facc15" stroke-width="10" stroke-linecap="round"/>
+</svg>
