@@ -209,14 +209,34 @@ function getProfileMapLabels(profile: AccessibilityProfile) {
         routeType: "盲道与提示优先",
         start: "盲起",
         current: "盲行",
-        planButton: "规划视障路线"
+        planButton: "生成盲道播报路线"
       }
     : {
         badge: "肢体障碍路线",
         routeType: "坡道电梯优先",
         start: "轮起",
         current: "轮行",
-        planButton: "规划肢体障碍路线"
+        planButton: "生成坡道电梯路线"
+      };
+}
+
+function getPlannerUi(profile: AccessibilityProfile) {
+  return profile === "vision"
+    ? {
+        title: "视障规划台",
+        subtitle: "听觉提示优先",
+        checks: ["盲道连续", "路口播报", "占用避让"],
+        assistTitle: "播报预览",
+        assistPrimary: "前方 80 米沿连续盲道直行",
+        assistSecondary: "过街口前 20 米增强语音提醒"
+      }
+    : {
+        title: "肢体障碍规划台",
+        subtitle: "坡道电梯优先",
+        checks: ["电梯可用", "坡道优先", "少台阶"],
+        assistTitle: "通行校验",
+        assistPrimary: "优先匹配可用电梯与平缓坡道",
+        assistSecondary: "台阶障碍和电梯故障会提高风险权重"
       };
 }
 
@@ -579,6 +599,7 @@ function MapDashboard(props: MapDashboardProps) {
     "--fallback-grid-size": `${48 * fallbackZoomScale}px`,
   } as CSSProperties;
   const profileLabels = getProfileMapLabels(props.accessibilityProfile);
+  const plannerUi = getPlannerUi(props.accessibilityProfile);
   const routeClassName = [
     "route-line",
     props.selectedRouteId === "safe" ? "safe-route" : "short-route",
@@ -747,7 +768,7 @@ function MapDashboard(props: MapDashboardProps) {
             value={props.destination}
             onChange={(event) => props.setDestination(event.target.value)}
           />
-          <fieldset className="profile-switch">
+          <fieldset className={`profile-switch ${props.accessibilityProfile}`}>
             <legend>出行需求</legend>
             <div>
               {profileOptions.map((option) => (
@@ -764,7 +785,20 @@ function MapDashboard(props: MapDashboardProps) {
               ))}
             </div>
           </fieldset>
-          <button onClick={() => props.setSelectedRouteId("safe")}>{profileLabels.planButton}</button>
+          <div className={`planner-console ${props.accessibilityProfile}`}>
+            <div>
+              <strong>{plannerUi.title}</strong>
+              <span>{plannerUi.subtitle}</span>
+            </div>
+            <ul aria-label={`${plannerUi.title}检查项`}>
+              {plannerUi.checks.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <button type="button" onClick={() => props.setSelectedRouteId("safe")}>
+              {profileLabels.planButton}
+            </button>
+          </div>
         </div>
         <div className="map-canvas">
           <div className={`map-profile-badge ${props.accessibilityProfile}`} aria-live="polite">
@@ -954,6 +988,11 @@ function MapDashboard(props: MapDashboardProps) {
                 <li key={item}>{item}</li>
               ))}
             </ul>
+          </div>
+          <div className={`planner-preview ${props.accessibilityProfile}`} aria-label={`${plannerUi.assistTitle}结果`}>
+            <strong>{plannerUi.assistTitle}</strong>
+            <p>{plannerUi.assistPrimary}</p>
+            <span>{plannerUi.assistSecondary}</span>
           </div>
           <div className="route-detail" aria-label="路线显示">
             <strong>路线显示</strong>

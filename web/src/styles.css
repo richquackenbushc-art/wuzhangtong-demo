@@ -252,7 +252,7 @@ h2 {
 
 .map-tools {
   display: grid;
-  grid-template-columns: 64px minmax(150px, 1fr) 72px minmax(150px, 1fr) minmax(220px, 0.9fr) auto;
+  grid-template-columns: 64px minmax(150px, 0.8fr) 72px minmax(150px, 0.8fr) minmax(220px, 0.75fr) minmax(260px, 1fr);
   gap: 12px;
   align-items: end;
   padding: 16px;
@@ -261,10 +261,6 @@ h2 {
 
 .map-tools label {
   margin: 0 0 11px;
-}
-
-.map-tools > button {
-  min-width: 150px;
 }
 
 .profile-switch {
@@ -300,6 +296,80 @@ h2 {
 
 .profile-option:hover:not(:disabled),
 .profile-option:focus-visible {
+  color: #ffffff;
+  background: #0b5f59;
+}
+
+.planner-console {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 12px;
+  align-items: center;
+  min-width: 0;
+  min-height: 92px;
+  padding: 12px;
+  border-radius: 8px;
+  color: #ffffff;
+}
+
+.planner-console.vision {
+  background: #3d2b08;
+}
+
+.planner-console.mobility {
+  background: #123b7a;
+}
+
+.planner-console > div {
+  display: grid;
+  gap: 2px;
+}
+
+.planner-console strong,
+.planner-console span {
+  line-height: 1.2;
+}
+
+.planner-console span {
+  font-size: 0.82rem;
+  font-weight: 800;
+  opacity: 0.9;
+}
+
+.planner-console ul {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.planner-console li {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.planner-console button {
+  align-self: start;
+  min-width: 132px;
+  padding: 0 12px;
+  color: #17312f;
+  background: #facc15;
+  font-weight: 900;
+}
+
+.planner-console.mobility button {
+  color: #ffffff;
+  background: #0f766e;
+}
+
+.planner-console button:hover:not(:disabled),
+.planner-console button:focus-visible {
   color: #ffffff;
   background: #0b5f59;
 }
@@ -760,6 +830,7 @@ h2 {
 }
 
 .profile-detail,
+.planner-preview,
 .route-detail {
   display: grid;
   gap: 10px;
@@ -771,6 +842,34 @@ h2 {
 
 .profile-detail {
   background: #fff8d6;
+}
+
+.planner-preview {
+  border: 1px solid #d5e3df;
+}
+
+.planner-preview.vision {
+  color: #3d2b08;
+  background: #fff6d8;
+  border-color: #e7c868;
+}
+
+.planner-preview.mobility {
+  color: #123b7a;
+  background: #eaf2ff;
+  border-color: #b8cdf6;
+}
+
+.planner-preview p {
+  margin: 0;
+  font-weight: 900;
+}
+
+.planner-preview span {
+  color: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  opacity: 0.82;
 }
 
 .profile-detail ul,
@@ -1116,6 +1215,8 @@ dd {
 .high-contrast .wall-metrics div,
 .high-contrast .ai-result,
 .high-contrast .map-profile-badge,
+.high-contrast .planner-console,
+.high-contrast .planner-preview,
 .high-contrast .profile-detail,
 .high-contrast .route-detail,
 .high-contrast .request-card,
