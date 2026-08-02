@@ -319,7 +319,7 @@ function App() {
             无
           </span>
           <div>
-            <strong>无障通</strong>
+            <strong>无碍通</strong>
             <small>众包安全出行 Demo</small>
           </div>
         </div>
