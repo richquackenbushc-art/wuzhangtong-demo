@@ -263,6 +263,10 @@ h2 {
   margin: 0 0 11px;
 }
 
+.map-tools > button {
+  min-width: 150px;
+}
+
 .profile-switch {
   min-width: 0;
   margin: 0;
@@ -306,6 +310,39 @@ h2 {
   min-height: 520px;
   overflow: hidden;
   background: #dfe9e5;
+}
+
+.map-profile-badge {
+  position: absolute;
+  z-index: 5;
+  top: 14px;
+  left: 14px;
+  display: grid;
+  gap: 2px;
+  min-width: 150px;
+  padding: 10px 12px;
+  border: 2px solid #ffffff;
+  border-radius: 8px;
+  color: #ffffff;
+  box-shadow: 0 10px 26px rgba(22, 40, 38, 0.18);
+}
+
+.map-profile-badge strong,
+.map-profile-badge span {
+  line-height: 1.2;
+}
+
+.map-profile-badge span {
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.map-profile-badge.vision {
+  background: #a16207;
+}
+
+.map-profile-badge.mobility {
+  background: #2563eb;
 }
 
 .map-viewport,
@@ -576,16 +613,27 @@ h2 {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.25;
+  stroke-width: 1.55;
   vector-effect: non-scaling-stroke;
 }
 
-.safe-route {
-  stroke: #0f766e;
+.vision-route {
+  stroke: #a16207;
+  stroke-dasharray: 4 2;
 }
 
-.short-route {
+.mobility-route {
+  stroke: #2563eb;
+}
+
+.short-route.vision-route {
   stroke: #dc2626;
+  stroke-dasharray: 2 2;
+}
+
+.short-route.mobility-route {
+  stroke: #c2410c;
+  stroke-dasharray: 5 3;
 }
 
 .danger-marker,
@@ -629,14 +677,28 @@ h2 {
 
 .user-marker {
   background: #111827;
+  font-size: 0.82rem;
 }
 
 .nav-marker {
   z-index: 4;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   background: #facc15;
   color: #123c38;
+  font-size: 0.82rem;
+}
+
+.user-marker.vision,
+.nav-marker.vision {
+  background: #a16207;
+  color: #ffffff;
+}
+
+.user-marker.mobility,
+.nav-marker.mobility {
+  background: #2563eb;
+  color: #ffffff;
 }
 
 .workbench {
@@ -653,14 +715,30 @@ h2 {
 
 .route-tab {
   display: grid;
+  gap: 4px;
   height: auto;
   padding: 12px;
   text-align: left;
 }
 
-.route-tab.active {
+.route-tab-profile {
+  justify-self: start;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: #17312f;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.route-tab.vision.active {
   color: #ffffff;
-  background: #0f766e;
+  background: #a16207;
+}
+
+.route-tab.mobility.active {
+  color: #ffffff;
+  background: #2563eb;
 }
 
 .route-tab span,
@@ -670,6 +748,10 @@ h2 {
 .list-panel span,
 .facility-card p {
   color: #5b706b;
+}
+
+.route-tab.active span {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .route-points {
@@ -1033,6 +1115,7 @@ dd {
 .high-contrast .metric-grid div,
 .high-contrast .wall-metrics div,
 .high-contrast .ai-result,
+.high-contrast .map-profile-badge,
 .high-contrast .profile-detail,
 .high-contrast .route-detail,
 .high-contrast .request-card,
@@ -1119,6 +1202,12 @@ dd {
     right: 12px;
     top: 12px;
     grid-template-columns: 44px minmax(56px, 1fr) 44px 48px;
+  }
+
+  .map-profile-badge {
+    top: 70px;
+    left: 12px;
+    min-width: 140px;
   }
 
   .metric-grid,

@@ -202,6 +202,24 @@ function getProfileFocusItems(profile: AccessibilityProfile) {
     : ["台阶与电梯故障权重更高", "优先坡道/电梯", "减少高差和绕行疲劳"];
 }
 
+function getProfileMapLabels(profile: AccessibilityProfile) {
+  return profile === "vision"
+    ? {
+        badge: "视障路线",
+        routeType: "盲道与提示优先",
+        start: "盲起",
+        current: "盲行",
+        planButton: "规划视障路线"
+      }
+    : {
+        badge: "肢体障碍路线",
+        routeType: "坡道电梯优先",
+        start: "轮起",
+        current: "轮行",
+        planButton: "规划肢体障碍路线"
+      };
+}
+
 function App() {
   const [activeView, setActiveView] = useState<ViewKey>("map");
   const [providerStatus, setProviderStatus] = useState<MapProviderStatus>(getInitialMapProviderStatus);
@@ -560,6 +578,12 @@ function MapDashboard(props: MapDashboardProps) {
     "--fallback-zoom-scale": Math.max(1, fallbackZoomScale),
     "--fallback-grid-size": `${48 * fallbackZoomScale}px`,
   } as CSSProperties;
+  const profileLabels = getProfileMapLabels(props.accessibilityProfile);
+  const routeClassName = [
+    "route-line",
+    props.selectedRouteId === "safe" ? "safe-route" : "short-route",
+    props.accessibilityProfile === "vision" ? "vision-route" : "mobility-route"
+  ].join(" ");
   const projectedCurrent = projectOnTiles(currentPoint, mapZoom, mapCenter);
   const canZoomOut = mapZoom > mapConfig.minZoom;
   const canZoomIn = mapZoom < mapConfig.maxZoom;
@@ -740,9 +764,13 @@ function MapDashboard(props: MapDashboardProps) {
               ))}
             </div>
           </fieldset>
-          <button onClick={() => props.setSelectedRouteId("safe")}>规划路线</button>
+          <button onClick={() => props.setSelectedRouteId("safe")}>{profileLabels.planButton}</button>
         </div>
         <div className="map-canvas">
+          <div className={`map-profile-badge ${props.accessibilityProfile}`} aria-live="polite">
+            <strong>{profileLabels.badge}</strong>
+            <span>{profileLabels.routeType}</span>
+          </div>
           <div className="map-zoom-controls" aria-label="地图缩放">
             <button type="button" onClick={() => changeZoom(-1)} disabled={!canZoomOut} aria-label="缩小地图" title="缩小地图">
               −
@@ -820,7 +848,7 @@ function MapDashboard(props: MapDashboardProps) {
               {/* 路线层 */}
               <svg className="route-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                 <polyline
-                  className={props.selectedRouteId === "safe" ? "safe-route" : "short-route"}
+                  className={routeClassName}
                   points={props.selectedRoute.path
                     .map((point) => {
                         const spot = projectOnTiles(point, mapZoom, mapCenter);
@@ -857,17 +885,20 @@ function MapDashboard(props: MapDashboardProps) {
               })}
               {/* 用户位置 */}
               <span
-                className="user-marker"
+                className={`user-marker ${props.accessibilityProfile}`}
                 style={{
                   left: `${projectOnTiles(props.selectedRoute.path[0], mapZoom, mapCenter).x}%`,
                   top: `${projectOnTiles(props.selectedRoute.path[0], mapZoom, mapCenter).y}%`,
                 }}
               >
-                起
+                {profileLabels.start}
               </span>
               {/* 导航点 */}
-              <span className="nav-marker" style={{ left: `${projectedCurrent.x}%`, top: `${projectedCurrent.y}%` }}>
-                行
+              <span
+                className={`nav-marker ${props.accessibilityProfile}`}
+                style={{ left: `${projectedCurrent.x}%`, top: `${projectedCurrent.y}%` }}
+              >
+                {profileLabels.current}
               </span>
             </div>
           </div>
@@ -882,9 +913,14 @@ function MapDashboard(props: MapDashboardProps) {
               key={route.id}
               role="tab"
               aria-selected={props.selectedRouteId === route.id}
-              className={props.selectedRouteId === route.id ? "route-tab active" : "route-tab"}
+              className={[
+                "route-tab",
+                props.accessibilityProfile === "vision" ? "vision" : "mobility",
+                props.selectedRouteId === route.id ? "active" : ""
+              ].join(" ")}
               onClick={() => props.setSelectedRouteId(route.id)}
             >
+              <small className="route-tab-profile">{profileLabels.badge}</small>
               <strong>{getRouteDisplayName(route.id, props.accessibilityProfile)}</strong>
               <span>{formatMeters(route.distance)} · {route.duration} 分钟</span>
             </button>
