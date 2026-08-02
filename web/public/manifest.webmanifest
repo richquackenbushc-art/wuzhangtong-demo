@@ -1,0 +1,17 @@
+{
+  "name": "无障通--让爱消除障碍",
+  "short_name": "无障通",
+  "description": "无障碍出行众包导航与互助 Demo",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7faf9",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "./pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
